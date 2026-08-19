@@ -2,109 +2,802 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#215AE2" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="고덕이네 채용" />
-  <title>고덕이네 채용 서칭기</title>
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <link rel="icon" href="/icons/icon-192.png" />
-  <link rel="stylesheet" href="/style.css" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+
+  <title>고덕이네 채용도구</title>
+
+  <meta
+    name="theme-color"
+    content="#215AE2"
+  />
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  />
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  />
+
+  <link
+    rel="manifest"
+    href="/manifest.json"
+  />
+
+  <link
+    rel="apple-touch-icon"
+    href="/icons/icon-192.png"
+  />
+
+  <link
+    rel="icon"
+    href="/icons/icon-192.png"
+  />
+
+  <link
+    rel="stylesheet"
+    href="/style.css"
+  />
 </head>
+
+
 <body>
+
+  <!-- =====================================================
+       상단
+  ====================================================== -->
+
   <header class="topbar">
-    <div>
-      <p class="eyebrow">고덕이네</p>
-      <h1>채용 자동 서칭기</h1>
+    <div class="topbar-inner">
+
+      <div>
+        <p class="topbar-kicker">
+          고덕이네
+        </p>
+
+        <h1>
+          채용공고 블로그 도구
+        </h1>
+      </div>
+
+      <div
+        class="rabbit-mark"
+        aria-hidden="true"
+      >
+        🐰
+      </div>
+
     </div>
-    <button id="installBtn" class="install-btn hidden" type="button">앱 설치</button>
   </header>
 
+
+  <!-- =====================================================
+       메인
+  ====================================================== -->
+
   <main>
-    <section class="search-card">
-      <div class="quick-chips" aria-label="빠른 검색">
-        <button class="chip active" data-keyword="보건관리자" type="button">보건관리자</button>
-        <button class="chip" data-keyword="산업간호사" type="button">산업간호사</button>
-        <button class="chip" data-keyword="안전관리자" type="button">안전관리자</button>
-      </div>
-      <div class="search-box">
-        <input id="keyword" type="search" value="보건관리자" placeholder="검색 키워드" enterkeyhint="search" />
-        <button id="searchBtn" type="button">검색</button>
-      </div>
-      <p class="source-note">사람인 · 잡코리아 · 인크루트</p>
+
+    <section class="intro-box">
+
+      <p class="intro-title">
+        채용공고를 찾아서 블로그 초안과 썸네일까지 한 번에 만들어요.
+      </p>
+
+      <p class="intro-help">
+        사람인 · 잡코리아 · 인크루트
+      </p>
+
     </section>
 
-    <p id="status" class="status">키워드를 입력하고 검색을 눌러주세요.</p>
-    <ul id="resultList" class="result-list"></ul>
+
+    <!-- 빠른 검색 -->
+
+    <section
+      class="quick-search"
+      aria-label="빠른 검색"
+    >
+
+      <button
+        type="button"
+        class="quick-chip"
+        data-keyword="보건관리자"
+      >
+        보건관리자
+      </button>
+
+      <button
+        type="button"
+        class="quick-chip"
+        data-keyword="산업간호사"
+      >
+        산업간호사
+      </button>
+
+      <button
+        type="button"
+        class="quick-chip"
+        data-keyword="안전관리자"
+      >
+        안전관리자
+      </button>
+
+      <button
+        type="button"
+        class="quick-chip"
+        data-keyword="산업위생"
+      >
+        산업위생
+      </button>
+
+    </section>
+
+
+    <!-- 검색창 -->
+
+    <section class="search-box">
+
+      <input
+        id="keyword"
+        type="search"
+        value="보건관리자"
+        placeholder="검색 키워드"
+        autocomplete="off"
+      />
+
+      <button
+        id="searchBtn"
+        type="button"
+      >
+        검색
+      </button>
+
+    </section>
+
+
+    <p
+      id="status"
+      class="status"
+    >
+      키워드를 입력하고 검색을 눌러주세요.
+    </p>
+
+
+    <!-- 검색 결과 -->
+
+    <ul
+      id="resultList"
+      class="result-list"
+    ></ul>
+
   </main>
 
-  <!-- 공고 확인 / 정보 수정 -->
-  <div id="sheetBackdrop" class="sheet-backdrop hidden" aria-hidden="true">
-    <section class="sheet sheet-tall" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+
+  <!-- =====================================================
+       공고 상세 / 액션 시트
+  ====================================================== -->
+
+  <div
+    id="sheetBackdrop"
+    class="sheet-backdrop hidden"
+  >
+
+    <div
+      id="sheet"
+      class="sheet sheet-tall"
+    >
+
       <div class="sheet-handle"></div>
-      <div class="sheet-head">
+
+
+      <div class="sheet-heading">
+
         <div>
-          <span id="sheetSource" class="src-tag"></span>
-          <h2 id="sheetTitle">공고 정보 확인</h2>
+
+          <p class="sheet-label">
+            채용공고 상세
+          </p>
+
+          <h2 id="sheetTitle">
+            채용공고
+          </h2>
+
         </div>
-        <button id="sheetCloseBtn" class="icon-close" type="button" aria-label="닫기">×</button>
-      </div>
-      <p class="helper">자동으로 못 읽은 항목만 원문을 보고 채워주세요. 입력한 값으로 글과 썸네일이 만들어집니다.</p>
 
-      <div class="form-grid">
-        <label class="form-row">회사명<input id="d_company" type="text" placeholder="예: 서울반도체" /></label>
-        <label class="form-row">직무명<input id="d_jobLabel" type="text" placeholder="예: 보건관리자" /></label>
-        <label class="form-row full">공고 제목<input id="d_title" type="text" /></label>
-        <label class="form-row">근무지<input id="d_location" type="text" placeholder="예: 경기 안산시" /></label>
-        <label class="form-row">고용형태<input id="d_employment" type="text" placeholder="예: 계약직" /></label>
-        <label class="form-row">경력/지원자격<input id="d_experience" type="text" placeholder="예: 경력 2년 이상" /></label>
-        <label class="form-row">접수마감<input id="d_deadline" type="text" placeholder="예: 09/17" /></label>
       </div>
 
-      <div class="sheet-actions two-col">
-        <button id="openOriginalBtn" class="secondary" type="button">원문 열기</button>
-        <button id="draftBtn" type="button">블로그 글 만들기</button>
-        <button id="thumbBtn" type="button">썸네일 만들기</button>
+
+      <p
+        id="sheetMeta"
+        class="sheet-meta"
+      >
+        상세 채용정보를 불러옵니다.
+      </p>
+
+
+      <div class="detail-toolbar">
+
+        <button
+          id="reloadDetailBtn"
+          type="button"
+          class="secondary-btn"
+        >
+          상세정보 다시 불러오기
+        </button>
+
+        <button
+          id="openOriginalBtn"
+          type="button"
+          class="secondary-btn"
+        >
+          원문 열기
+        </button>
+
       </div>
-    </section>
+
+
+      <!-- =================================================
+           추출 정보 확인/수정
+      ================================================== -->
+
+      <section class="detail-edit">
+
+        <div class="section-heading">
+
+          <h3>
+            채용정보 확인
+          </h3>
+
+          <p>
+            자동으로 가져온 내용이 틀리면 여기서 수정하세요.
+          </p>
+
+        </div>
+
+
+        <div class="detail-grid">
+
+
+          <div class="form-row">
+
+            <label for="d_company">
+              회사명
+            </label>
+
+            <input
+              id="d_company"
+              type="text"
+              placeholder="예: 인천백병원"
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <label for="d_jobTitle">
+              대표 직무명
+            </label>
+
+            <input
+              id="d_jobTitle"
+              type="text"
+              placeholder="예: 보건관리자"
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <label for="d_location">
+              근무지
+            </label>
+
+            <input
+              id="d_location"
+              type="text"
+              placeholder="예: 인천 계양구"
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <label for="d_employment">
+              고용형태
+            </label>
+
+            <input
+              id="d_employment"
+              type="text"
+              placeholder="예: 정규직"
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <label for="d_experience">
+              경력
+            </label>
+
+            <input
+              id="d_experience"
+              type="text"
+              placeholder="예: 경력무관"
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <label for="d_education">
+              학력
+            </label>
+
+            <input
+              id="d_education"
+              type="text"
+              placeholder="예: 대졸 이상"
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <label for="d_deadline">
+              접수 마감
+            </label>
+
+            <input
+              id="d_deadline"
+              type="text"
+              placeholder="예: 09.17"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- 주요 업무 -->
+
+        <div class="form-row">
+
+          <label for="d_duties">
+            주요 업무
+          </label>
+
+          <textarea
+            id="d_duties"
+            class="detail-textarea"
+            placeholder="자동 추출된 주요 업무"
+          ></textarea>
+
+        </div>
+
+
+        <!-- 지원자격 -->
+
+        <div class="form-row">
+
+          <label for="d_requirements">
+            지원자격
+          </label>
+
+          <textarea
+            id="d_requirements"
+            class="detail-textarea"
+            placeholder="자동 추출된 지원자격"
+          ></textarea>
+
+        </div>
+
+
+        <!-- 우대사항 -->
+
+        <div class="form-row">
+
+          <label for="d_preferences">
+            우대사항
+          </label>
+
+          <textarea
+            id="d_preferences"
+            class="detail-textarea"
+            placeholder="자동 추출된 우대사항"
+          ></textarea>
+
+        </div>
+
+
+        <!-- 근무조건 -->
+
+        <div class="form-row">
+
+          <label for="d_workConditions">
+            근무조건
+          </label>
+
+          <textarea
+            id="d_workConditions"
+            class="detail-textarea"
+            placeholder="자동 추출된 근무조건"
+          ></textarea>
+
+        </div>
+
+
+        <button
+          id="saveDetailBtn"
+          type="button"
+          class="save-detail-btn"
+        >
+          수정내용 반영
+        </button>
+
+      </section>
+
+
+      <!-- =================================================
+           작업 버튼
+      ================================================== -->
+
+      <div class="sheet-actions primary-actions">
+
+        <button
+          id="draftBtn"
+          type="button"
+        >
+          블로그 초안 만들기
+        </button>
+
+        <button
+          id="thumbBtn"
+          type="button"
+        >
+          썸네일 만들기
+        </button>
+
+      </div>
+
+
+      <button
+        id="sheetCloseBtn"
+        type="button"
+        class="sheet-close"
+      >
+        닫기
+      </button>
+
+    </div>
   </div>
 
-  <!-- 블로그 초안 -->
-  <div id="draftBackdrop" class="sheet-backdrop hidden" aria-hidden="true">
-    <section class="sheet sheet-tall" role="dialog" aria-modal="true">
+
+  <!-- =====================================================
+       블로그 초안
+  ====================================================== -->
+
+  <div
+    id="draftBackdrop"
+    class="sheet-backdrop hidden"
+  >
+
+    <div
+      class="sheet sheet-tall"
+    >
+
       <div class="sheet-handle"></div>
-      <div class="sheet-head">
-        <h2>블로그 초안</h2>
-        <button id="draftCloseBtn" class="icon-close" type="button" aria-label="닫기">×</button>
+
+
+      <div class="section-heading">
+
+        <h2>
+          블로그 초안
+        </h2>
+
+        <p>
+          필요한 부분만 손본 뒤 네이버 블로그에 붙여넣으면 됩니다.
+        </p>
+
       </div>
-      <textarea id="draftText" class="draft-textarea"></textarea>
+
+
+      <textarea
+        id="draftText"
+        class="draft-textarea"
+        spellcheck="false"
+      ></textarea>
+
+
       <div class="sheet-actions">
-        <button id="copyDraftBtn" type="button">본문 전체 복사</button>
-        <button id="copyNaverBtn" class="naver-btn" type="button">복사하고 네이버 블로그 열기</button>
+
+        <button
+          id="copyDraftBtn"
+          type="button"
+        >
+          전체 복사
+        </button>
+
       </div>
-    </section>
+
+
+      <button
+        id="draftCloseBtn"
+        type="button"
+        class="sheet-close"
+      >
+        닫기
+      </button>
+
+    </div>
   </div>
 
-  <!-- 썸네일 -->
-  <div id="thumbBackdrop" class="sheet-backdrop hidden" aria-hidden="true">
-    <section class="sheet sheet-tall" role="dialog" aria-modal="true">
+
+  <!-- =====================================================
+       썸네일
+  ====================================================== -->
+
+  <div
+    id="thumbBackdrop"
+    class="sheet-backdrop hidden"
+  >
+
+    <div
+      class="sheet sheet-tall"
+    >
+
       <div class="sheet-handle"></div>
-      <div class="sheet-head">
-        <h2>블로그 썸네일</h2>
-        <button id="thumbCloseBtn" class="icon-close" type="button" aria-label="닫기">×</button>
+
+
+      <div class="section-heading">
+
+        <h2>
+          블로그 썸네일
+        </h2>
+
+        <p>
+          텍스트를 수정하면 미리보기에 바로 반영됩니다.
+        </p>
+
       </div>
-      <p class="helper">공고 정보 화면에 입력한 값으로 1080×1080 이미지를 만듭니다.</p>
-      <canvas id="thumbCanvas" width="1080" height="1080"></canvas>
+
+
+      <div class="thumb-edit-grid">
+
+
+        <div class="form-row">
+
+          <label for="f_company">
+            회사명
+          </label>
+
+          <input
+            id="f_company"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_jobLabel">
+            직무명
+          </label>
+
+          <input
+            id="f_jobLabel"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_sub1">
+            부제 1
+          </label>
+
+          <input
+            id="f_sub1"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_sub2">
+            부제 2
+          </label>
+
+          <input
+            id="f_sub2"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_location">
+            근무지
+          </label>
+
+          <input
+            id="f_location"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_employment">
+            고용형태
+          </label>
+
+          <input
+            id="f_employment"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_experience">
+            경력 / 자격
+          </label>
+
+          <input
+            id="f_experience"
+            type="text"
+          />
+
+        </div>
+
+
+        <div class="form-row">
+
+          <label for="f_deadline">
+            접수마감
+          </label>
+
+          <input
+            id="f_deadline"
+            type="text"
+          />
+
+        </div>
+
+      </div>
+
+
+      <div class="form-check-row">
+
+        <label>
+
+          <input
+            id="f_useMascot"
+            type="checkbox"
+            checked
+          />
+
+          토끼 캐릭터 표시
+
+        </label>
+
+      </div>
+
+
+      <div class="canvas-wrap">
+
+        <canvas
+          id="thumbCanvas"
+          width="1080"
+          height="1080"
+        ></canvas>
+
+      </div>
+
+
       <div class="sheet-actions">
-        <button id="regenThumbBtn" class="secondary" type="button">다시 그리기</button>
-        <button id="downloadThumbBtn" type="button">이미지 저장</button>
+
+        <button
+          id="regenThumbBtn"
+          type="button"
+          class="secondary-action"
+        >
+          다시 그리기
+        </button>
+
+        <button
+          id="downloadThumbBtn"
+          type="button"
+        >
+          PNG 저장
+        </button>
+
       </div>
-    </section>
+
+
+      <button
+        id="thumbCloseBtn"
+        type="button"
+        class="sheet-close"
+      >
+        닫기
+      </button>
+
+    </div>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+
+  <!-- =====================================================
+       토스트
+  ====================================================== -->
+
+  <div
+    id="toast"
+    class="toast hidden"
+    aria-live="polite"
+  ></div>
+
+
   <script src="/app.js"></script>
+
+
+  <!-- 빠른 검색 버튼 -->
+  <script>
+    document
+      .querySelectorAll(".quick-chip")
+      .forEach((button) => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            const keyword =
+              button.dataset.keyword || "";
+
+            const input =
+              document.getElementById("keyword");
+
+            if (input) {
+              input.value = keyword;
+            }
+
+            const searchButton =
+              document.getElementById(
+                "searchBtn"
+              );
+
+            if (searchButton) {
+              searchButton.click();
+            }
+
+          }
+        );
+
+      });
+  </script>
+
 </body>
 </html>
