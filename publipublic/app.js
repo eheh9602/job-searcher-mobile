@@ -1,6 +1,5 @@
 "use strict";
 
-
 /* =========================================================
    상태
 ========================================================= */
@@ -10,8 +9,7 @@ let selectedJob = null;
 let detailLoading = null;
 let lastSearchKeyword = "보건관리자";
 
-const $ = (id) =>
-  document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 
 /* =========================================================
@@ -20,7 +18,6 @@ const $ = (id) =>
 
 function showToast(message) {
   const el = $("toast");
-
   if (!el) return;
 
   el.textContent = message;
@@ -35,7 +32,7 @@ function showToast(message) {
 
 
 /* =========================================================
-   문자열 정리
+   문자열 처리
 ========================================================= */
 
 function escapeHtml(str) {
@@ -54,8 +51,7 @@ function escapeHtml(str) {
 
 
 function cleanValue(value) {
-  const text =
-    String(value || "").trim();
+  const text = String(value || "").trim();
 
   if (!text) return "";
 
@@ -76,9 +72,7 @@ function cleanValue(value) {
 
   if (
     badValues.some(
-      (item) =>
-        text.toLowerCase() ===
-        item.toLowerCase()
+      (item) => text.toLowerCase() === item.toLowerCase()
     )
   ) {
     return "";
@@ -90,8 +84,7 @@ function cleanValue(value) {
 
 function firstValue(...values) {
   for (const value of values) {
-    const cleaned =
-      cleanValue(value);
+    const cleaned = cleanValue(value);
 
     if (cleaned) {
       return cleaned;
@@ -104,44 +97,35 @@ function firstValue(...values) {
 
 function normalizeTitle(title) {
   return cleanValue(title)
-    .replace(
-      /\s*[-|]\s*(사람인|잡코리아|인크루트).*$/i,
-      ""
-    )
+    .replace(/\s*[-|]\s*(사람인|잡코리아|인크루트).*$/i, "")
     .replace(/\s*::\s*.*$/i, "")
     .trim();
 }
 
 
 function inferCompanyFromTitle(title) {
-  const match =
-    normalizeTitle(title).match(
-      /^\[([^\]]{2,60})\]/
-    );
+  const match = normalizeTitle(title).match(
+    /^\[([^\]]{2,60})\]/
+  );
 
-  return match
-    ? match[1].trim()
-    : "";
+  return match ? match[1].trim() : "";
 }
 
 
 function companyName(job) {
   return firstValue(
     job?.company,
-    inferCompanyFromTitle(
-      job?.title
-    )
+    inferCompanyFromTitle(job?.title)
   );
 }
 
 
 /* =========================================================
-   직무명
+   직무 판별
 ========================================================= */
 
 function normalizeSearchKeyword(keyword) {
-  const value =
-    String(keyword || "");
+  const value = String(keyword || "");
 
   if (/보건관리자/i.test(value)) {
     return "보건관리자";
@@ -164,8 +148,7 @@ function normalizeSearchKeyword(keyword) {
 
 
 function findRepresentativeJobLabel(text) {
-  const value =
-    String(text || "");
+  const value = String(text || "");
 
   const rules = [
     [/안전보건관리자/i, "안전보건관리자"],
@@ -177,10 +160,7 @@ function findRepresentativeJobLabel(text) {
     [/간호사/i, "간호사"],
   ];
 
-  for (
-    const [regex, label]
-    of rules
-  ) {
+  for (const [regex, label] of rules) {
     if (regex.test(value)) {
       return label;
     }
@@ -191,37 +171,31 @@ function findRepresentativeJobLabel(text) {
 
 
 function guessJobLabel(job) {
-  const manual =
-    cleanValue(
-      job?.manualJobTitle
-    );
+  const manual = cleanValue(job?.manualJobTitle);
 
   if (manual) {
     return manual;
   }
 
-  const search =
-    normalizeSearchKeyword(
-      job?.searchKeyword
-    );
+  const searched = normalizeSearchKeyword(
+    job?.searchKeyword
+  );
 
-  if (search) {
-    return search;
+  if (searched) {
+    return searched;
   }
 
-  const detail =
-    findRepresentativeJobLabel(
-      job?.jobTitle
-    );
+  const detail = findRepresentativeJobLabel(
+    job?.jobTitle
+  );
 
   if (detail) {
     return detail;
   }
 
-  const title =
-    findRepresentativeJobLabel(
-      job?.title
-    );
+  const title = findRepresentativeJobLabel(
+    job?.title
+  );
 
   if (title) {
     return title;
@@ -236,13 +210,11 @@ function guessJobLabel(job) {
 ========================================================= */
 
 function normalizeEmployment(value) {
-  const original =
-    cleanValue(value);
+  const original = cleanValue(value);
 
   if (!original) return "";
 
-  const upper =
-    original.toUpperCase();
+  const upper = original.toUpperCase();
 
   if (
     upper.includes("FULL_TIME") ||
@@ -261,15 +233,11 @@ function normalizeEmployment(value) {
     return "계약직";
   }
 
-  if (
-    upper.includes("PART_TIME")
-  ) {
+  if (upper.includes("PART_TIME")) {
     return "시간제";
   }
 
-  if (
-    upper.includes("INTERN")
-  ) {
+  if (upper.includes("INTERN")) {
     return "인턴";
   }
 
@@ -278,10 +246,9 @@ function normalizeEmployment(value) {
 
 
 function guessEmploymentType(job) {
-  const direct =
-    normalizeEmployment(
-      job?.employment
-    );
+  const direct = normalizeEmployment(
+    job?.employment
+  );
 
   if (direct) {
     return direct;
@@ -317,73 +284,45 @@ function guessEmploymentType(job) {
 
 
 /* =========================================================
-   경력 / 학력
+   경력 / 학력 / 지역 / 마감
 ========================================================= */
 
 function normalizeExperience(value) {
-  let text =
-    cleanValue(value);
+  let text = cleanValue(value);
 
   if (!text) return "";
 
   return text
-    .replace(
-      /EXPERIENCE_NOT_REQUIRED/gi,
-      "경력무관"
-    )
-    .replace(
-      /NO_EXPERIENCE/gi,
-      "경력무관"
-    )
-    .replace(
-      /ENTRY_LEVEL/gi,
-      "신입"
-    )
-    .replace(
-      /EXPERIENCED/gi,
-      "경력"
-    )
-    .replace(
-      /\s*[,/]\s*/g,
-      "·"
-    )
+    .replace(/EXPERIENCE_NOT_REQUIRED/gi, "경력무관")
+    .replace(/NO_EXPERIENCE/gi, "경력무관")
+    .replace(/ENTRY_LEVEL/gi, "신입")
+    .replace(/EXPERIENCED/gi, "경력")
+    .replace(/\s*[,/]\s*/g, "·")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 
 function normalizeEducation(value) {
-  const text =
-    cleanValue(value);
+  const text = cleanValue(value);
 
   if (!text) return "";
 
-  const upper =
-    text.toUpperCase();
+  const upper = text.toUpperCase();
 
-  if (
-    upper.includes(
-      "EDUCATION_NOT_REQUIRED"
-    )
-  ) {
+  if (upper.includes("EDUCATION_NOT_REQUIRED")) {
     return "학력무관";
   }
 
-  if (
-    upper.includes("BACHELOR")
-  ) {
+  if (upper.includes("BACHELOR")) {
     return "대졸";
   }
 
-  if (
-    upper.includes("ASSOCIATE")
-  ) {
+  if (upper.includes("ASSOCIATE")) {
     return "전문대졸";
   }
 
-  if (
-    upper.includes("HIGH_SCHOOL")
-  ) {
+  if (upper.includes("HIGH_SCHOOL")) {
     return "고졸";
   }
 
@@ -391,30 +330,21 @@ function normalizeEducation(value) {
 }
 
 
-/* =========================================================
-   지역
-========================================================= */
-
 function shortLocation(location) {
-  const value =
-    cleanValue(location);
+  const value = cleanValue(location);
 
   if (!value) return "";
 
-  const parts =
-    value
-      .split(/\s+/)
-      .filter(Boolean);
+  const parts = value
+    .split(/\s+/)
+    .filter(Boolean);
 
-  return parts
-    .slice(0, 2)
-    .join(" ");
+  return parts.slice(0, 2).join(" ");
 }
 
 
 function broadLocation(location) {
-  const value =
-    cleanValue(location);
+  const value = cleanValue(location);
 
   if (!value) return "";
 
@@ -448,13 +378,8 @@ function broadLocation(location) {
 }
 
 
-/* =========================================================
-   마감일
-========================================================= */
-
 function normalizeDeadline(value) {
-  const text =
-    cleanValue(value);
+  const text = cleanValue(value);
 
   if (!text) return "";
 
@@ -466,12 +391,7 @@ function normalizeDeadline(value) {
     return "채용시";
   }
 
-  /*
-   * 이미 충분히 자세한 날짜라면 그대로 보존
-   */
-  if (
-    /20\d{2}[.\-/년]\s*\d{1,2}/.test(text)
-  ) {
+  if (/20\d{2}[.\-/년]\s*\d{1,2}/.test(text)) {
     return text;
   }
 
@@ -491,12 +411,11 @@ function normalizeDeadline(value) {
 
 
 /* =========================================================
-   여러 줄 정리
+   섹션 처리
 ========================================================= */
 
 function sectionLines(value) {
-  const text =
-    cleanValue(value);
+  const text = cleanValue(value);
 
   if (!text) return [];
 
@@ -513,16 +432,11 @@ function sectionLines(value) {
     .filter(Boolean)
     .filter(
       (item, index, array) =>
-        array.indexOf(item) ===
-        index
+        array.indexOf(item) === index
     )
     .slice(0, 12);
 }
 
-
-/* =========================================================
-   상세내용에서 추가정보 추론
-========================================================= */
 
 function combinedJobText(job) {
   return [
@@ -537,9 +451,12 @@ function combinedJobText(job) {
 }
 
 
+/* =========================================================
+   상세정보에서 추가 추론
+========================================================= */
+
 function inferContractPeriod(job) {
-  const text =
-    combinedJobText(job);
+  const text = combinedJobText(job);
 
   const match = text.match(
     /(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})\s*[~～\-]\s*(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/
@@ -552,8 +469,7 @@ function inferContractPeriod(job) {
 
 
 function inferApplicationMethod(job) {
-  const text =
-    combinedJobText(job);
+  const text = combinedJobText(job);
 
   const patterns = [
     /(?:접수방법|지원방법)\s*[:：]?\s*([^\n]{2,80})/i,
@@ -564,13 +480,10 @@ function inferApplicationMethod(job) {
   ];
 
   for (const regex of patterns) {
-    const match =
-      text.match(regex);
+    const match = text.match(regex);
 
     if (match) {
-      return cleanValue(
-        match[1]
-      );
+      return cleanValue(match[1]);
     }
   }
 
@@ -579,10 +492,9 @@ function inferApplicationMethod(job) {
 
 
 function inferRequiredQualifications(job) {
-  const lines =
-    sectionLines(
-      job?.requirements
-    );
+  const lines = sectionLines(
+    job?.requirements
+  );
 
   const priority = lines.filter(
     (line) =>
@@ -591,10 +503,7 @@ function inferRequiredQualifications(job) {
       )
   );
 
-  return (
-    priority.slice(0, 4).join(" + ") ||
-    ""
-  );
+  return priority.slice(0, 4).join(" + ");
 }
 
 
@@ -623,15 +532,12 @@ async function runSearch() {
   }
 
   try {
-    const response =
-      await fetch(
-        `/api/search?keyword=${encodeURIComponent(
-          keyword
-        )}`,
-        {
-          cache: "no-store",
-        }
-      );
+    const response = await fetch(
+      `/api/search?keyword=${encodeURIComponent(keyword)}`,
+      {
+        cache: "no-store",
+      }
+    );
 
     if (!response.ok) {
       throw new Error(
@@ -639,38 +545,35 @@ async function runSearch() {
       );
     }
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
-    currentJobs =
-      (data.jobs || []).map(
-        (job) => ({
-          ...job,
+    currentJobs = (data.jobs || []).map(
+      (job) => ({
+        ...job,
 
-          searchKeyword:
-            keyword,
+        searchKeyword: keyword,
 
-          employment:
-            normalizeEmployment(
-              job.employment
-            ),
+        employment:
+          normalizeEmployment(
+            job.employment
+          ),
 
-          experience:
-            normalizeExperience(
-              job.experience
-            ),
+        experience:
+          normalizeExperience(
+            job.experience
+          ),
 
-          education:
-            normalizeEducation(
-              job.education
-            ),
+        education:
+          normalizeEducation(
+            job.education
+          ),
 
-          deadline:
-            normalizeDeadline(
-              job.deadline
-            ),
-        })
-      );
+        deadline:
+          normalizeDeadline(
+            job.deadline
+          ),
+      })
+    );
 
     renderResults(currentJobs);
 
@@ -678,22 +581,19 @@ async function runSearch() {
 
     currentJobs.forEach((job) => {
       counts[job.source] =
-        (counts[job.source] || 0) +
-        1;
+        (counts[job.source] || 0) + 1;
     });
 
-    const summary =
-      Object.entries(counts)
-        .map(
-          ([source, count]) =>
-            `${source} ${count}건`
-        )
-        .join(" · ");
+    const summary = Object.entries(counts)
+      .map(
+        ([source, count]) =>
+          `${source} ${count}건`
+      )
+      .join(" · ");
 
-    const failures =
-      Object.keys(
-        data.errors || {}
-      );
+    const failures = Object.keys(
+      data.errors || {}
+    );
 
     let status =
       `총 ${currentJobs.length}건`;
@@ -704,9 +604,7 @@ async function runSearch() {
 
     if (failures.length) {
       status +=
-        ` · 일부 검색 실패: ${failures.join(
-          ", "
-        )}`;
+        ` · 일부 검색 실패: ${failures.join(", ")}`;
     }
 
     if ($("status")) {
@@ -727,81 +625,75 @@ async function runSearch() {
 
 
 /* =========================================================
-   검색결과 출력
+   검색 결과
 ========================================================= */
 
 function renderResults(jobs) {
-  const list =
-    $("resultList");
+  const list = $("resultList");
 
   if (!list) return;
 
   list.innerHTML = "";
 
-  jobs.forEach(
-    (job, index) => {
-      const item =
-        document.createElement("li");
+  jobs.forEach((job, index) => {
+    const item =
+      document.createElement("li");
 
-      item.className =
-        "result-item";
+    item.className =
+      "result-item";
 
-      const company =
-        companyName(job) ||
-        "회사명 확인";
+    const company =
+      companyName(job) ||
+      "회사명 확인";
 
-      const meta = [
-        shortLocation(
-          job.location
-        ),
+    const meta = [
+      shortLocation(
+        job.location
+      ),
+      guessEmploymentType(job),
+      normalizeExperience(
+        job.experience
+      ),
+      normalizeDeadline(
+        job.deadline
+      ),
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
-        guessEmploymentType(job),
+    item.innerHTML = `
+      <span class="src-tag">
+        ${escapeHtml(job.source)}
+      </span>
 
-        normalizeExperience(
-          job.experience
-        ),
+      <p class="company">
+        ${escapeHtml(company)}
+      </p>
 
-        normalizeDeadline(
-          job.deadline
-        ),
-      ]
-        .filter(Boolean)
-        .join(" · ");
+      <p class="title">
+        ${escapeHtml(
+          normalizeTitle(job.title)
+        )}
+      </p>
 
-      item.innerHTML = `
-        <span class="src-tag">
-          ${escapeHtml(job.source)}
-        </span>
+      ${
+        meta
+          ? `
+          <p class="result-meta">
+            ${escapeHtml(meta)}
+          </p>
+        `
+          : ""
+      }
+    `;
 
-        <p class="company">
-          ${escapeHtml(company)}
-        </p>
+    item.addEventListener(
+      "click",
+      () => openSheet(index)
+    );
 
-        <p class="title">
-          ${escapeHtml(
-            normalizeTitle(job.title)
-          )}
-        </p>
-
-        ${
-          meta
-            ? `
-            <p class="result-meta">
-              ${escapeHtml(meta)}
-            </p>
-          `
-            : ""
-        }
-      `;
-
-      item.addEventListener(
-        "click",
-        () => openSheet(index)
-      );
-
-      list.appendChild(item);
-    }
-  );
+    list.appendChild(item);
+  });
 }
 
 
@@ -985,8 +877,7 @@ async function ensureSelectedDetail() {
           );
 
         if (index >= 0) {
-          currentJobs[index] =
-            job;
+          currentJobs[index] = job;
         }
 
         updateSheet();
@@ -1012,9 +903,7 @@ async function openSheet(index) {
   updateSheet(true);
 
   $("sheetBackdrop")
-    ?.classList.remove(
-      "hidden"
-    );
+    ?.classList.remove("hidden");
 
   try {
     await ensureSelectedDetail();
@@ -1049,19 +938,15 @@ function updateSheet(loading = false) {
           companyName(
             selectedJob
           ),
-
           guessJobLabel(
             selectedJob
           ),
-
           shortLocation(
             selectedJob.location
           ),
-
           guessEmploymentType(
             selectedJob
           ),
-
           normalizeExperience(
             selectedJob.experience
           ),
@@ -1079,14 +964,12 @@ function updateSheet(loading = false) {
 
 function closeSheet() {
   $("sheetBackdrop")
-    ?.classList.add(
-      "hidden"
-    );
+    ?.classList.add("hidden");
 }
 
 
 /* =========================================================
-   수정폼
+   상세 수정
 ========================================================= */
 
 function setInput(id, value) {
@@ -1232,7 +1115,7 @@ function applyDetailEditForm() {
 
 
 /* =========================================================
-   블로그 추천대상 생성
+   추천대상
 ========================================================= */
 
 function buildRecommendedAudience(job) {
@@ -1273,49 +1156,29 @@ function buildRecommendedAudience(job) {
     );
 
   if (
-    /간호사.*면허|간호사\s*면허/i.test(
-      allText
-    )
-  ) {
-    output.push(
-      "간호사 면허를 보유한 분"
-    );
-  }
-
-  if (
-    /산업위생관리기사/i.test(
-      allText
-    )
-  ) {
-    output.push(
-      "산업위생관리기사를 보유한 분"
-    );
-  }
-
-  if (
     /간호사.*면허/i.test(allText) &&
     /산업위생관리기사/i.test(allText)
   ) {
-    output.unshift(
+    output.push(
       "간호사 면허와 산업위생관리기사를 모두 보유한 분"
     );
-
-    const index =
-      output.indexOf(
+  } else {
+    if (
+      /간호사.*면허/i.test(allText)
+    ) {
+      output.push(
         "간호사 면허를 보유한 분"
       );
-
-    if (index >= 0) {
-      output.splice(index, 1);
     }
 
-    const index2 =
-      output.indexOf(
+    if (
+      /산업위생관리기사/i.test(
+        allText
+      )
+    ) {
+      output.push(
         "산업위생관리기사를 보유한 분"
       );
-
-    if (index2 >= 0) {
-      output.splice(index2, 1);
     }
   }
 
@@ -1362,9 +1225,7 @@ function buildRecommendedAudience(job) {
   }
 
   if (
-    employment.includes(
-      "계약직"
-    )
+    employment.includes("계약직")
   ) {
     output.push(
       `${employment} 근무가 가능한 분`
@@ -1377,7 +1238,7 @@ function buildRecommendedAudience(job) {
 
 
 /* =========================================================
-   지원 전 체크리스트
+   체크리스트
 ========================================================= */
 
 function buildChecklist(job) {
@@ -1457,7 +1318,7 @@ function buildChecklist(job) {
     )
   ) {
     output.push(
-      "작업환경측정·화학물질·MSDS·근골격계 등 관련 경험이 있다면 이력서에 구체적으로 작성해 보세요."
+      "작업환경측정·화학물질·MSDS·근골격계 관련 경험이 있다면 이력서에 구체적으로 작성해 보세요."
     );
   }
 
@@ -1509,9 +1370,9 @@ function extractRecruitmentProcess(job) {
     "서류전형",
     "Phone Screen",
     "전화면접",
-    "면접",
     "1차 면접",
     "2차 면접",
+    "면접",
     "신체검사",
     "채용검진",
     "최종합격",
@@ -1530,7 +1391,7 @@ function extractRecruitmentProcess(job) {
 
 
 /* =========================================================
-   ★ 새 블로그 초안
+   블로그 초안
 ========================================================= */
 
 function buildDraft(job) {
@@ -1540,11 +1401,6 @@ function buildDraft(job) {
 
   const jobLabel =
     guessJobLabel(job);
-
-  const title =
-    normalizeTitle(
-      job.title
-    );
 
   const location =
     cleanValue(
@@ -1585,9 +1441,7 @@ function buildDraft(job) {
     );
 
   const requiredQualification =
-    inferRequiredQualifications(
-      job
-    );
+    inferRequiredQualifications(job);
 
   const duties =
     sectionLines(
@@ -1600,22 +1454,13 @@ function buildDraft(job) {
     );
 
   const recommended =
-    buildRecommendedAudience(
-      job
-    );
+    buildRecommendedAudience(job);
 
   const process =
-    extractRecruitmentProcess(
-      job
-    );
+    extractRecruitmentProcess(job);
 
   const checklist =
     buildChecklist(job);
-
-
-  /* ---------------------------------------------
-     첫 문장
-  --------------------------------------------- */
 
   let introLocation = "";
 
@@ -1629,11 +1474,6 @@ function buildDraft(job) {
 
   const intro =
     `${introLocation}**${company}의 ${jobLabel} 채용공고**를 공유드립니다.`;
-
-
-  /* ---------------------------------------------
-     한눈에 보기
-  --------------------------------------------- */
 
   const summary = [
     ["회사명", company],
@@ -1673,11 +1513,6 @@ function buildDraft(job) {
         `- ${label}: ${value}`
     );
 
-
-  /* ---------------------------------------------
-     최종 글
-  --------------------------------------------- */
-
   const lines = [
     "안녕하세요.",
     "",
@@ -1688,9 +1523,6 @@ function buildDraft(job) {
     ...summary,
   ];
 
-
-  /* 주요 담당업무 */
-
   if (duties.length) {
     lines.push(
       "",
@@ -1698,17 +1530,12 @@ function buildDraft(job) {
       ""
     );
 
-    duties.forEach(
-      (item) => {
-        lines.push(
-          `- ${item}`
-        );
-      }
-    );
+    duties.forEach((item) => {
+      lines.push(
+        `- ${item}`
+      );
+    });
   }
-
-
-  /* 지원자격 */
 
   if (requirements.length) {
     lines.push(
@@ -1717,17 +1544,12 @@ function buildDraft(job) {
       ""
     );
 
-    requirements.forEach(
-      (item) => {
-        lines.push(
-          `- ${item}`
-        );
-      }
-    );
+    requirements.forEach((item) => {
+      lines.push(
+        `- ${item}`
+      );
+    });
   }
-
-
-  /* 이런 분이 살펴보면 좋아요 */
 
   if (recommended.length) {
     lines.push(
@@ -1736,31 +1558,21 @@ function buildDraft(job) {
       ""
     );
 
-    recommended.forEach(
-      (item) => {
-        lines.push(
-          `- ${item}`
-        );
-      }
-    );
+    recommended.forEach((item) => {
+      lines.push(
+        `- ${item}`
+      );
+    });
   }
-
-
-  /* 채용절차 */
 
   if (process.length) {
     lines.push(
       "",
       "■ 채용절차",
       "",
-      process.join(
-        "\n→ "
-      )
+      process.join("\n→ ")
     );
   }
-
-
-  /* 체크리스트 */
 
   if (checklist.length) {
     lines.push(
@@ -1778,18 +1590,12 @@ function buildDraft(job) {
     );
   }
 
-
-  /* 원문 */
-
   lines.push(
     "",
     "■ 공고 원문",
     "",
     job.url || ""
   );
-
-
-  /* 해시태그 */
 
   const hashtags = [];
 
@@ -1845,7 +1651,7 @@ function buildDraft(job) {
 
 
 /* =========================================================
-   Canvas 썸네일
+   Canvas
 ========================================================= */
 
 const CANVAS_SIZE = 1080;
@@ -2003,10 +1809,6 @@ function getMascotImage() {
       };
 
       image.onerror = () => {
-        /*
-         * PNG 없으면 아무 토끼도 안 그림.
-         * 밤티 fallback 영구 퇴출.
-         */
         mascotImg = null;
         mascotChecked = true;
 
@@ -2014,21 +1816,20 @@ function getMascotImage() {
       };
 
       image.src =
-        "/icons/mascot-rabbit.png?v=9";
+        "/icons/mascot-rabbit.png?v=11";
     }
   );
 }
 
 
 /* =========================================================
-   썸네일 창
+   썸네일창
 ========================================================= */
 
 function openThumbSheet() {
   if (!selectedJob) return;
 
-  const job =
-    selectedJob;
+  const job = selectedJob;
 
   const label =
     guessJobLabel(job);
@@ -2052,7 +1853,7 @@ function openThumbSheet() {
 
   if ($("f_sub2")) {
     $("f_sub2").value =
-      `${label} 모집`;
+      `${label} 채용`;
   }
 
   if ($("f_location")) {
@@ -2089,16 +1890,14 @@ function openThumbSheet() {
   closeSheet();
 
   $("thumbBackdrop")
-    ?.classList.remove(
-      "hidden"
-    );
+    ?.classList.remove("hidden");
 
   drawThumbnail();
 }
 
 
 /* =========================================================
-   썸네일 그리기
+   ★ 글자 큰 썸네일
 ========================================================= */
 
 async function drawThumbnail() {
@@ -2173,10 +1972,10 @@ async function drawThumbnail() {
   );
 
 
-  /* 외곽 */
+  /* 외곽 테두리 */
 
   ctx.strokeStyle =
-    COLORS.navy;
+    COLORS.vividBlue;
 
   ctx.lineWidth = 8;
 
@@ -2184,15 +1983,14 @@ async function drawThumbnail() {
     ctx,
     18,
     18,
-    1044,
-    1044,
-    45
+    CANVAS_SIZE - 36,
+    CANVAS_SIZE - 36,
+    48
   );
 
   ctx.stroke();
 
-
-  const pad = 65;
+  const pad = 64;
 
 
   /* 상단 라벨 */
@@ -2204,36 +2002,36 @@ async function drawThumbnail() {
     fitFontSize(
       ctx,
       labelText,
-      700,
-      370,
-      37,
+      800,
+      420,
+      42,
       27
     );
 
   ctx.font =
     font(
-      700,
+      800,
       labelSize
     );
 
   const labelWidth =
     Math.min(
-      410,
+      450,
       ctx.measureText(
         labelText
-      ).width + 64
+      ).width + 70
     );
 
   ctx.fillStyle =
-    COLORS.navy;
+    COLORS.vividBlue;
 
   roundRectPath(
     ctx,
     pad,
-    75,
+    65,
     labelWidth,
-    76,
-    38
+    82,
+    41
   );
 
   ctx.fill();
@@ -2246,26 +2044,30 @@ async function drawThumbnail() {
 
   ctx.fillText(
     labelText,
-    pad + 30,
-    113
+    pad + 35,
+    106
   );
 
 
-  /* 회사명 */
+  /* 회사명 ★ 최대로 크게 */
+
+  const companyMaxWidth =
+    CANVAS_SIZE -
+    pad * 2;
 
   const companySize =
     fitFontSize(
       ctx,
       company,
-      800,
-      920,
-      78,
-      44
+      900,
+      companyMaxWidth,
+      108,
+      52
     );
 
   ctx.font =
     font(
-      800,
+      900,
       companySize
     );
 
@@ -2278,7 +2080,7 @@ async function drawThumbnail() {
   ctx.fillText(
     company,
     pad,
-    275
+    290
   );
 
 
@@ -2293,35 +2095,35 @@ async function drawThumbnail() {
 
   ctx.moveTo(
     pad,
-    330
+    340
   );
 
   ctx.lineTo(
-    655,
-    330
+    CANVAS_SIZE - pad,
+    340
   );
 
   ctx.stroke();
 
 
-  /* 왼쪽 텍스트 영역 */
+  /* 메인 텍스트 */
 
-  const textWidth = 600;
+  let mainY = 445;
 
   if (sub1) {
     const size =
       fitFontSize(
         ctx,
         sub1,
-        700,
-        textWidth,
-        51,
-        34
+        800,
+        660,
+        70,
+        38
       );
 
     ctx.font =
       font(
-        700,
+        800,
         size
       );
 
@@ -2331,40 +2133,45 @@ async function drawThumbnail() {
     ctx.fillText(
       sub1,
       pad,
-      410
+      mainY
     );
+
+    mainY +=
+      size + 38;
   }
 
 
-  if (sub2) {
-    const size =
-      fitFontSize(
-        ctx,
-        sub2,
-        700,
-        textWidth,
-        55,
-        34
-      );
+  const mainRoleText =
+    sub2 ||
+    `${jobLabel} 채용`;
 
-    ctx.font =
-      font(
-        700,
-        size
-      );
-
-    ctx.fillStyle =
-      COLORS.blue;
-
-    ctx.fillText(
-      sub2,
-      pad,
-      485
+  const roleSize =
+    fitFontSize(
+      ctx,
+      mainRoleText,
+      900,
+      680,
+      82,
+      42
     );
-  }
+
+  ctx.font =
+    font(
+      900,
+      roleSize
+    );
+
+  ctx.fillStyle =
+    COLORS.vividBlue;
+
+  ctx.fillText(
+    mainRoleText,
+    pad,
+    mainY
+  );
 
 
-  /* ★ 큰 토끼 */
+  /* 토끼 우하단 */
 
   if (
     $("f_useMascot")?.checked
@@ -2373,12 +2180,8 @@ async function drawThumbnail() {
       await getMascotImage();
 
     if (image) {
-      /*
-       * 토끼는 회사명 아래 오른쪽.
-       * 회사명 폭은 거의 전체 사용 가능.
-       */
-      const boxWidth = 350;
-      const boxHeight = 360;
+      const boxWidth = 315;
+      const boxHeight = 345;
 
       const ratio =
         Math.min(
@@ -2395,15 +2198,12 @@ async function drawThumbnail() {
         image.height * ratio;
 
       const x =
-        695 +
-        (
-          boxWidth -
-          width
-        ) /
-        2;
+        CANVAS_SIZE -
+        width -
+        10;
 
       const y =
-        295 +
+        520 +
         (
           boxHeight -
           height
@@ -2424,58 +2224,52 @@ async function drawThumbnail() {
   /* 카드 */
 
   const cards = [
-    [
-      "●",
-      location,
-      "근무지",
-    ],
-    [
-      "▣",
-      employment,
-      "고용형태",
-    ],
-    [
-      "♟",
-      experience,
-      "경력/자격",
-    ],
-    [
-      "▦",
-      deadline,
-      "접수마감",
-    ],
+    {
+      symbol: "●",
+      value: location,
+      caption: "근무지",
+    },
+    {
+      symbol: "▣",
+      value: employment,
+      caption: "고용형태",
+    },
+    {
+      symbol: "♟",
+      value: experience,
+      caption: "경력/자격",
+    },
+    {
+      symbol: "▦",
+      value: deadline,
+      caption: "접수마감",
+    },
   ].filter(
-    ([, value]) =>
-      cleanValue(value)
+    (card) =>
+      cleanValue(card.value)
   );
 
 
-  const cardTop = 720;
-  const cardHeight = 235;
+  const cardTop = 755;
+  const cardHeight = 220;
   const gap = 14;
 
   if (cards.length) {
-    const available =
-      1080 - pad * 2;
+    const availableWidth =
+      CANVAS_SIZE -
+      pad * 2;
 
     const cardWidth =
       (
-        available -
+        availableWidth -
         gap *
           (cards.length - 1)
       ) /
       cards.length;
 
-    let x = pad;
+    let currentX = pad;
 
-    for (
-      const [
-        symbol,
-        value,
-        caption,
-      ]
-      of cards
-    ) {
+    for (const card of cards) {
       ctx.fillStyle =
         COLORS.cardBg;
 
@@ -2486,41 +2280,41 @@ async function drawThumbnail() {
 
       roundRectPath(
         ctx,
-        x,
+        currentX,
         cardTop,
         cardWidth,
         cardHeight,
-        20
+        22
       );
 
       ctx.fill();
       ctx.stroke();
 
-      const cx =
-        x +
+      const centerX =
+        currentX +
         cardWidth / 2;
 
       drawCircleIcon(
         ctx,
-        cx,
-        cardTop + 63,
-        symbol
+        centerX,
+        cardTop + 55,
+        card.symbol
       );
 
-      const size =
+      const valueSize =
         fitFontSize(
           ctx,
-          value,
-          700,
-          cardWidth - 22,
+          card.value,
+          800,
+          cardWidth - 24,
           31,
           17
         );
 
       ctx.font =
         font(
-          700,
-          size
+          800,
+          valueSize
         );
 
       ctx.fillStyle =
@@ -2533,14 +2327,14 @@ async function drawThumbnail() {
         "alphabetic";
 
       ctx.fillText(
-        value,
-        cx,
-        cardTop + 155
+        card.value,
+        centerX,
+        cardTop + 142
       );
 
       ctx.font =
         font(
-          400,
+          500,
           21
         );
 
@@ -2548,15 +2342,15 @@ async function drawThumbnail() {
         COLORS.gray;
 
       ctx.fillText(
-        caption,
-        cx,
-        cardTop + 198
+        card.caption,
+        centerX,
+        cardTop + 185
       );
 
       ctx.textAlign =
         "left";
 
-      x +=
+      currentX +=
         cardWidth + gap;
     }
   }
@@ -2566,8 +2360,8 @@ async function drawThumbnail() {
 
   ctx.font =
     font(
-      700,
-      27
+      800,
+      26
     );
 
   ctx.fillStyle =
@@ -2578,8 +2372,8 @@ async function drawThumbnail() {
 
   ctx.fillText(
     "고덕이네",
-    1015,
-    1015
+    CANVAS_SIZE - 55,
+    1025
   );
 
   ctx.textAlign =
@@ -2679,8 +2473,6 @@ $("saveDetailBtn")
   );
 
 
-/* 블로그 초안 */
-
 $("draftBtn")
   ?.addEventListener(
     "click",
@@ -2689,12 +2481,7 @@ $("draftBtn")
 
       try {
         await ensureSelectedDetail();
-      } catch {
-        /*
-         * 상세 조회가 실패해도
-         * 현재 확보한 정보로 초안 생성.
-         */
-      }
+      } catch {}
 
       if ($("draftText")) {
         $("draftText").value =
@@ -2774,8 +2561,6 @@ $("copyDraftBtn")
   );
 
 
-/* 썸네일 */
-
 $("thumbBtn")
   ?.addEventListener(
     "click",
@@ -2836,8 +2621,6 @@ $("regenThumbBtn")
   );
 });
 
-
-/* PNG 저장 */
 
 $("downloadThumbBtn")
   ?.addEventListener(
@@ -2902,9 +2685,7 @@ $("downloadThumbBtn")
    서비스워커
 ========================================================= */
 
-if (
-  "serviceWorker" in navigator
-) {
+if ("serviceWorker" in navigator) {
   window.addEventListener(
     "load",
     () => {
