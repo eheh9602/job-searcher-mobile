@@ -1,7 +1,8 @@
 "use strict";
 
+
 /* =========================================================
-   공통
+   기본 헤더
 ========================================================= */
 
 const HEADERS = {
@@ -18,22 +19,36 @@ const HEADERS = {
 };
 
 
-async function fetchHtml(url, encoding = "utf-8") {
-  const res = await fetch(url, {
+/* =========================================================
+   공통 유틸
+========================================================= */
+
+async function fetchHtml(
+  url,
+  encoding = "utf-8"
+) {
+  const response = await fetch(url, {
     headers: HEADERS,
     redirect: "follow",
   });
 
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
+  if (!response.ok) {
+    throw new Error(
+      `HTTP ${response.status}`
+    );
   }
 
-  const buffer = await res.arrayBuffer();
+  const buffer =
+    await response.arrayBuffer();
 
   try {
-    return new TextDecoder(encoding).decode(buffer);
+    return new TextDecoder(
+      encoding
+    ).decode(buffer);
   } catch {
-    return new TextDecoder("utf-8").decode(buffer);
+    return new TextDecoder(
+      "utf-8"
+    ).decode(buffer);
   }
 }
 
@@ -46,23 +61,40 @@ function decodeEntities(str) {
     .replace(/&#39;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
-    .replace(/&#(\d+);/g, (_, code) => {
-      try {
-        return String.fromCharCode(Number(code));
-      } catch {
-        return "";
+    .replace(
+      /&#(\d+);/g,
+      (_, code) => {
+        try {
+          return String.fromCharCode(
+            Number(code)
+          );
+        } catch {
+          return "";
+        }
       }
-    });
+    );
 }
 
 
 function stripTags(str) {
   return decodeEntities(
     String(str || "")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<br\s*\/?>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
+      .replace(
+        /<script[\s\S]*?<\/script>/gi,
+        " "
+      )
+      .replace(
+        /<style[\s\S]*?<\/style>/gi,
+        " "
+      )
+      .replace(
+        /<br\s*\/?>/gi,
+        " "
+      )
+      .replace(
+        /<[^>]+>/g,
+        " "
+      )
   )
     .replace(/\s+/g, " ")
     .trim();
@@ -76,21 +108,33 @@ function cleanText(str) {
 }
 
 
-function getAttr(tag, name) {
-  const re = new RegExp(
-    `${name}\\s*=\\s*["']([^"']*)["']`,
-    "i"
-  );
+function getAttr(
+  tag,
+  name
+) {
+  const regex =
+    new RegExp(
+      `${name}\\s*=\\s*["']([^"']*)["']`,
+      "i"
+    );
 
-  const match = String(tag || "").match(re);
+  const match =
+    String(tag || "").match(
+      regex
+    );
 
   return match
-    ? decodeEntities(match[1]).trim()
+    ? decodeEntities(
+        match[1]
+      ).trim()
     : "";
 }
 
 
-function absoluteUrl(base, href) {
+function absoluteUrl(
+  base,
+  href
+) {
   try {
     return new URL(
       decodeEntities(href),
@@ -105,11 +149,15 @@ function absoluteUrl(base, href) {
 function getContext(
   html,
   index,
-  before = 1200,
-  after = 2200
+  before = 1500,
+  after = 3000
 ) {
   return html.slice(
-    Math.max(0, index - before),
+    Math.max(
+      0,
+      index - before
+    ),
+
     Math.min(
       html.length,
       index + after
@@ -119,7 +167,7 @@ function getContext(
 
 
 /* =========================================================
-   검색 관련성 필터
+   검색어 관련성
 ========================================================= */
 
 function normalizeKeyword(text) {
@@ -133,61 +181,68 @@ function normalizeKeyword(text) {
 }
 
 
-function buildKeywordVariants(keyword) {
-  const key = normalizeKeyword(keyword);
+function buildKeywordVariants(
+  keyword
+) {
+  const key =
+    normalizeKeyword(keyword);
 
-  const variants = new Set([key]);
+  const variants =
+    new Set([key]);
 
-  /*
-   * 자주 쓰는 유사 표현
-   */
-  const aliases = {
-    "보건관리자": [
+  const aliasMap = {
+    보건관리자: [
       "보건관리자",
       "산업보건",
       "산업간호사",
-      "보건담당자",
+      "안전보건관리자",
     ],
 
-    "산업간호사": [
+    산업간호사: [
       "산업간호사",
       "보건관리자",
       "산업보건",
     ],
 
-    "안전관리자": [
+    안전관리자: [
       "안전관리자",
       "산업안전",
       "안전담당자",
+      "안전보건관리자",
     ],
 
-    "산업위생": [
+    산업위생: [
       "산업위생",
       "산업위생관리기사",
       "작업환경",
     ],
   };
 
-  for (const [
-    base,
-    items
-  ] of Object.entries(aliases)) {
-
+  for (
+    const [base, aliases]
+    of Object.entries(
+      aliasMap
+    )
+  ) {
     if (
-      normalizeKeyword(base) === key
+      normalizeKeyword(base) ===
+      key
     ) {
-
-      items.forEach((item) =>
-        variants.add(
-          normalizeKeyword(item)
-        )
+      aliases.forEach(
+        (item) => {
+          variants.add(
+            normalizeKeyword(
+              item
+            )
+          );
+        }
       );
-
     }
-
   }
 
-  return [...variants].filter(Boolean);
+  return [
+    ...variants,
+  ].filter(Boolean);
 }
 
 
@@ -205,24 +260,31 @@ function relevanceScore(
     );
 
   const variants =
-    buildKeywordVariants(keyword);
+    buildKeywordVariants(
+      keyword
+    );
 
   let score = 0;
 
-  for (const variant of variants) {
-
+  for (
+    const variant
+    of variants
+  ) {
     if (
-      titleNorm.includes(variant)
+      titleNorm.includes(
+        variant
+      )
     ) {
       score += 10;
     }
 
     if (
-      contextNorm.includes(variant)
+      contextNorm.includes(
+        variant
+      )
     ) {
       score += 2;
     }
-
   }
 
   return score;
@@ -234,44 +296,88 @@ function isRelevantJob(
   context,
   keyword
 ) {
-  const score =
+  return (
     relevanceScore(
       title,
       context,
       keyword
-    );
-
-  /*
-   * 제목에 정확 키워드가 있으면 10점.
-   * 주변 텍스트만 있으면 최대 몇 점 수준.
-   *
-   * 기본적으로 제목 일치를 강하게 우선.
-   */
-
-  return score >= 10;
+    ) >= 10
+  );
 }
 
 
 /* =========================================================
-   제목에서 회사명
+   회사명
 ========================================================= */
 
-function inferCompanyFromTitle(title) {
-  const text = cleanText(title);
+function inferCompanyFromTitle(
+  title
+) {
+  const text =
+    cleanText(title);
 
   const match =
     text.match(
-      /^\[([^\]]{2,50})\]/
+      /^\[([^\]]{2,60})\]/
     );
 
-  if (!match) return "";
+  return match
+    ? match[1].trim()
+    : "";
+}
 
-  return match[1].trim();
+
+function inferCompanyFromContext(
+  context,
+  source
+) {
+  const patterns =
+    source === "사람인"
+      ? [
+          /class=["'][^"']*corp_name[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+
+          /class=["'][^"']*company_name[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+
+          /class=["'][^"']*company[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+        ]
+
+      : source === "잡코리아"
+      ? [
+          /class=["'][^"']*company[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+
+          /class=["'][^"']*corp[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+        ]
+
+      : [
+          /class=["'][^"']*company[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+
+          /class=["'][^"']*cpname[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
+        ];
+
+  for (const regex of patterns) {
+    const match =
+      String(context || "")
+        .match(regex);
+
+    if (!match) continue;
+
+    const company =
+      cleanText(match[1]);
+
+    if (
+      company.length >= 2 &&
+      company.length <= 60
+    ) {
+      return company;
+    }
+  }
+
+  return "";
 }
 
 
 /* =========================================================
-   부가정보 추론
+   부가정보
 ========================================================= */
 
 const REGIONS = [
@@ -296,23 +402,28 @@ const REGIONS = [
 
 
 function inferLocation(text) {
-  const t = cleanText(text);
+  const value =
+    cleanText(text);
 
   const regionPattern =
     REGIONS.join("|");
 
-  const match = t.match(
-    new RegExp(
-      `(${regionPattern})\\s+([가-힣]{1,12}(?:시|군|구))`
-    )
-  );
+  const detailed =
+    value.match(
+      new RegExp(
+        `(${regionPattern})\\s+([가-힣]{1,12}(?:시|군|구|전체))`
+      )
+    );
 
-  if (match) {
-    return `${match[1]} ${match[2]}`;
+  if (detailed) {
+    return (
+      `${detailed[1]} ` +
+      `${detailed[2]}`
+    );
   }
 
   const simple =
-    t.match(
+    value.match(
       new RegExp(
         `(${regionPattern})`
       )
@@ -325,7 +436,8 @@ function inferLocation(text) {
 
 
 function inferEmployment(text) {
-  const t = cleanText(text);
+  const value =
+    cleanText(text);
 
   const types = [
     "정규직",
@@ -340,7 +452,9 @@ function inferEmployment(text) {
   ];
 
   for (const type of types) {
-    if (t.includes(type)) {
+    if (
+      value.includes(type)
+    ) {
       return type;
     }
   }
@@ -350,7 +464,8 @@ function inferEmployment(text) {
 
 
 function inferExperience(text) {
-  const t = cleanText(text);
+  const value =
+    cleanText(text);
 
   const patterns = [
     /경력무관/,
@@ -360,14 +475,19 @@ function inferExperience(text) {
     /경력\s*\d+\s*년\s*↑/,
     /경력\s*\d+\s*년/,
     /신입/,
+    /경력/,
   ];
 
-  for (const re of patterns) {
-    const m = t.match(re);
+  for (const regex of patterns) {
+    const match =
+      value.match(regex);
 
-    if (m) {
-      return m[0]
-        .replace(/\s+/g, "");
+    if (match) {
+      return match[0]
+        .replace(
+          /\s+/g,
+          ""
+        );
     }
   }
 
@@ -376,22 +496,27 @@ function inferExperience(text) {
 
 
 function inferEducation(text) {
-  const t = cleanText(text);
+  const value =
+    cleanText(text);
 
-  const values = [
+  const levels = [
     "학력무관",
     "고졸",
-    "초대졸",
+    "고졸↑",
+    "대학(2,3년)↑",
     "전문대졸",
+    "초대졸",
+    "대학교(4년)↑",
     "대졸",
-    "대학교졸업",
     "석사",
     "박사",
   ];
 
-  for (const value of values) {
-    if (t.includes(value)) {
-      return value;
+  for (const level of levels) {
+    if (
+      value.includes(level)
+    ) {
+      return level;
     }
   }
 
@@ -400,28 +525,50 @@ function inferEducation(text) {
 
 
 function inferDeadline(text) {
-  const t = cleanText(text);
+  const value =
+    cleanText(text);
 
-  if (t.includes("상시채용")) {
+  if (
+    value.includes(
+      "상시채용"
+    )
+  ) {
     return "상시채용";
   }
 
-  if (t.includes("채용시")) {
+  if (
+    value.includes(
+      "채용시"
+    )
+  ) {
     return "채용시";
   }
 
-  if (t.includes("오늘마감")) {
+  if (
+    value.includes(
+      "오늘마감"
+    )
+  ) {
     return "오늘마감";
   }
 
-  const match = t.match(
-    /~?\s*(\d{1,2})[./](\d{1,2})(?:\s*\([가-힣]\))?/
-  );
+  if (
+    value.includes(
+      "내일마감"
+    )
+  ) {
+    return "내일마감";
+  }
 
-  if (match) {
+  const date =
+    value.match(
+      /~\s*(\d{1,2})[./](\d{1,2})/
+    );
+
+  if (date) {
     return (
-      `${match[1].padStart(2, "0")}.` +
-      `${match[2].padStart(2, "0")}`
+      `${date[1].padStart(2, "0")}.` +
+      `${date[2].padStart(2, "0")}`
     );
   }
 
@@ -430,47 +577,47 @@ function inferDeadline(text) {
 
 
 /* =========================================================
-   회사명 주변 추론
+   사람인 카테고리
 ========================================================= */
 
-function inferCompanyFromContext(
-  context,
-  source
+function getSaraminCategory(
+  keyword
 ) {
-  const patterns =
-    source === "사람인"
-      ? [
-          /class=["'][^"']*corp_name[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
-          /class=["'][^"']*company_name[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
-        ]
+  const normalized =
+    normalizeKeyword(keyword);
 
-      : source === "잡코리아"
-      ? [
-          /class=["'][^"']*company[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
-          /class=["'][^"']*corp[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
-        ]
+  /*
+   * 확인된 사람인 직무 category ID
+   */
 
-      : [
-          /class=["'][^"']*company[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
-          /class=["'][^"']*cpname[^"']*["'][^>]*>([\s\S]*?)<\/a>/i,
-        ];
+  if (
+    normalized ===
+    normalizeKeyword(
+      "보건관리자"
+    )
+  ) {
+    return "2027";
+  }
 
-  for (const re of patterns) {
-    const match =
-      String(context || "")
-        .match(re);
+  if (
+    normalized ===
+    normalizeKeyword(
+      "산업간호사"
+    )
+  ) {
+    /*
+     * 산업간호사는 보건관리자 직무군에서 같이 찾는다.
+     */
+    return "2027";
+  }
 
-    if (match) {
-      const company =
-        cleanText(match[1]);
-
-      if (
-        company.length >= 2 &&
-        company.length <= 60
-      ) {
-        return company;
-      }
-    }
+  if (
+    normalized ===
+    normalizeKeyword(
+      "안전관리자"
+    )
+  ) {
+    return "2037";
   }
 
   return "";
@@ -481,14 +628,29 @@ function inferCompanyFromContext(
    사람인
 ========================================================= */
 
-async function searchSaramin(keyword) {
+async function searchSaramin(
+  keyword
+) {
   const base =
     "https://www.saramin.co.kr";
 
-  const url =
-    `${base}/zf_user/search/recruit` +
-    `?searchword=${encodeURIComponent(keyword)}` +
-    `&recruitPage=1`;
+  const categoryId =
+    getSaraminCategory(
+      keyword
+    );
+
+  let url;
+
+  if (categoryId) {
+    url =
+      `${base}/zf_user/jobs/list/job-category` +
+      `?cat_kewd=${categoryId}`;
+  } else {
+    url =
+      `${base}/zf_user/search/recruit` +
+      `?searchword=${encodeURIComponent(keyword)}` +
+      `&recruitPage=1`;
+  }
 
   const html =
     await fetchHtml(
@@ -497,22 +659,25 @@ async function searchSaramin(keyword) {
     );
 
   const jobs = [];
-  const seen = new Set();
+  const seen =
+    new Set();
+
 
   /*
-   * 사람인은 구조가 자주 바뀌어서
-   * rec_idx 링크 자체를 우선 찾는다.
+   * 사람인 상세공고 링크는 보통
+   * /zf_user/jobs/relay/view?rec_idx=...
    */
 
-  const re =
-    /<a\b[^>]*href=["']([^"']*rec_idx=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  const linkRegex =
+    /<a\b[^>]*href=["']([^"']*(?:jobs\/relay\/view|rec_idx=\d+)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
   let match;
 
   while (
-    (match = re.exec(html)) !== null
+    (match =
+      linkRegex.exec(html))
+    !== null
   ) {
-
     const href =
       absoluteUrl(
         base,
@@ -529,15 +694,30 @@ async function searchSaramin(keyword) {
     const tag =
       match[0];
 
-    const title =
+    let title =
       cleanText(
-        getAttr(tag, "title")
-      ) ||
-      cleanText(match[2]);
+        getAttr(
+          tag,
+          "title"
+        )
+      );
+
+    if (!title) {
+      title =
+        cleanText(
+          match[2]
+        );
+    }
+
+    /*
+     * 사람인 리스트에는 같은 공고 URL에
+     * 회사명/스크랩 등의 다른 링크가 섞일 수 있으므로
+     * 너무 짧은 텍스트는 버림
+     */
 
     if (
       !title ||
-      title.length < 4
+      title.length < 5
     ) {
       continue;
     }
@@ -546,23 +726,69 @@ async function searchSaramin(keyword) {
       getContext(
         html,
         match.index,
-        1600,
-        2600
+        2200,
+        4200
       );
 
+
     /*
-     * 검색어가 제목에 실제로 없으면 제외
+     * 카테고리 검색은 직무분류 자체가 이미 관련성이 있으므로
+     * 일반검색보다 조금 느슨하게 통과.
+     *
+     * 단 산업간호사처럼 별도 키워드 검색을 원할 때는
+     * 실제 제목/주변 직무텍스트 관련성도 본다.
      */
 
+    const normalized =
+      normalizeKeyword(
+        keyword
+      );
+
+    let relevant = true;
+
     if (
+      normalized ===
+      normalizeKeyword(
+        "산업간호사"
+      )
+    ) {
+      const surrounding =
+        cleanText(context);
+
+      relevant =
+        normalizeKeyword(
+          title +
+          " " +
+          surrounding
+        ).includes(
+          normalizeKeyword(
+            "산업간호사"
+          )
+        ) ||
+        normalizeKeyword(
+          title
+        ).includes(
+          normalizeKeyword(
+            "보건관리자"
+          )
+        );
+    }
+
+    if (
+      !categoryId &&
       !isRelevantJob(
         title,
         context,
         keyword
       )
     ) {
+      relevant = false;
+    }
+
+    if (!relevant) {
       continue;
     }
+
 
     const company =
       inferCompanyFromContext(
@@ -573,29 +799,45 @@ async function searchSaramin(keyword) {
         title
       );
 
+
     seen.add(href);
 
     jobs.push({
-      source: "사람인",
+      source:
+        "사람인",
+
       company,
+
       title,
+
       location:
-        inferLocation(context),
+        inferLocation(
+          context
+        ),
 
       employment:
-        inferEmployment(context),
+        inferEmployment(
+          context
+        ),
 
       experience:
-        inferExperience(context),
+        inferExperience(
+          context
+        ),
 
       education:
-        inferEducation(context),
+        inferEducation(
+          context
+        ),
 
       deadline:
-        inferDeadline(context),
+        inferDeadline(
+          context
+        ),
 
       url: href,
     });
+
 
     if (
       jobs.length >= 25
@@ -604,9 +846,10 @@ async function searchSaramin(keyword) {
     }
   }
 
+
   if (!jobs.length) {
     throw new Error(
-      "사람인 검색결과를 찾지 못했습니다."
+      `사람인 ${keyword} 공고를 찾지 못했습니다.`
     );
   }
 
@@ -618,7 +861,9 @@ async function searchSaramin(keyword) {
    잡코리아
 ========================================================= */
 
-async function searchJobkorea(keyword) {
+async function searchJobkorea(
+  keyword
+) {
   const base =
     "https://www.jobkorea.co.kr";
 
@@ -633,17 +878,20 @@ async function searchJobkorea(keyword) {
     );
 
   const jobs = [];
-  const seen = new Set();
 
-  const re =
+  const seen =
+    new Set();
+
+  const regex =
     /<a\b[^>]*href=["']([^"']*\/Recruit\/GI_Read\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
   let match;
 
   while (
-    (match = re.exec(html)) !== null
+    (match =
+      regex.exec(html))
+    !== null
   ) {
-
     const href =
       absoluteUrl(
         base,
@@ -662,9 +910,14 @@ async function searchJobkorea(keyword) {
 
     const title =
       cleanText(
-        getAttr(tag, "title")
+        getAttr(
+          tag,
+          "title"
+        )
       ) ||
-      cleanText(match[2]);
+      cleanText(
+        match[2]
+      );
 
     if (
       !title ||
@@ -703,24 +956,37 @@ async function searchJobkorea(keyword) {
     seen.add(href);
 
     jobs.push({
-      source: "잡코리아",
+      source:
+        "잡코리아",
+
       company,
+
       title,
 
       location:
-        inferLocation(context),
+        inferLocation(
+          context
+        ),
 
       employment:
-        inferEmployment(context),
+        inferEmployment(
+          context
+        ),
 
       experience:
-        inferExperience(context),
+        inferExperience(
+          context
+        ),
 
       education:
-        inferEducation(context),
+        inferEducation(
+          context
+        ),
 
       deadline:
-        inferDeadline(context),
+        inferDeadline(
+          context
+        ),
 
       url: href,
     });
@@ -746,7 +1012,9 @@ async function searchJobkorea(keyword) {
    인크루트
 ========================================================= */
 
-async function searchIncruit(keyword) {
+async function searchIncruit(
+  keyword
+) {
   const base =
     "https://job.incruit.com";
 
@@ -762,17 +1030,20 @@ async function searchIncruit(keyword) {
     );
 
   const jobs = [];
-  const seen = new Set();
 
-  const re =
+  const seen =
+    new Set();
+
+  const regex =
     /<a\b[^>]*href=["']([^"']*jobdb_info\/jobpost\.asp[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
   let match;
 
   while (
-    (match = re.exec(html)) !== null
+    (match =
+      regex.exec(html))
+    !== null
   ) {
-
     const href =
       absoluteUrl(
         base,
@@ -791,9 +1062,14 @@ async function searchIncruit(keyword) {
 
     const title =
       cleanText(
-        getAttr(tag, "title")
+        getAttr(
+          tag,
+          "title"
+        )
       ) ||
-      cleanText(match[2]);
+      cleanText(
+        match[2]
+      );
 
     if (
       !title ||
@@ -809,11 +1085,6 @@ async function searchIncruit(keyword) {
         1500,
         2600
       );
-
-    /*
-     * 인크루트는 HOT/인기광고가 섞이므로
-     * 제목 검색어 일치가 특히 중요
-     */
 
     if (
       !isRelevantJob(
@@ -837,24 +1108,37 @@ async function searchIncruit(keyword) {
     seen.add(href);
 
     jobs.push({
-      source: "인크루트",
+      source:
+        "인크루트",
+
       company,
+
       title,
 
       location:
-        inferLocation(context),
+        inferLocation(
+          context
+        ),
 
       employment:
-        inferEmployment(context),
+        inferEmployment(
+          context
+        ),
 
       experience:
-        inferExperience(context),
+        inferExperience(
+          context
+        ),
 
       education:
-        inferEducation(context),
+        inferEducation(
+          context
+        ),
 
       deadline:
-        inferDeadline(context),
+        inferDeadline(
+          context
+        ),
 
       url: href,
     });
@@ -887,70 +1171,47 @@ function dedupeJobs(jobs) {
   const seenTitles =
     new Set();
 
-  return jobs.filter((job) => {
-    const urlKey =
-      String(job.url || "")
-        .toLowerCase();
+  return jobs.filter(
+    (job) => {
+      const urlKey =
+        String(
+          job.url || ""
+        ).toLowerCase();
 
-    const titleKey =
-      normalizeKeyword(
-        `${job.company || ""}${job.title || ""}`
+      const titleKey =
+        `${job.source}|` +
+        normalizeKeyword(
+          `${job.company || ""}` +
+          `${job.title || ""}`
+        );
+
+      if (
+        seenUrls.has(
+          urlKey
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        seenTitles.has(
+          titleKey
+        )
+      ) {
+        return false;
+      }
+
+      seenUrls.add(
+        urlKey
       );
 
-    if (
-      seenUrls.has(urlKey)
-    ) {
-      return false;
-    }
-
-    /*
-     * 동일 사이트에서 비슷한 제목 반복도 제거
-     */
-    const titleSourceKey =
-      `${job.source}|${titleKey}`;
-
-    if (
-      seenTitles.has(
-        titleSourceKey
-      )
-    ) {
-      return false;
-    }
-
-    seenUrls.add(urlKey);
-    seenTitles.add(
-      titleSourceKey
-    );
-
-    return true;
-  });
-}
-
-
-/* =========================================================
-   최종 안전필터
-========================================================= */
-
-function finalFilter(
-  jobs,
-  keyword
-) {
-  return jobs.filter((job) => {
-
-    /*
-     * 마지막으로 제목 자체에
-     * 검색어/유사검색어가 있는지 재확인
-     */
-
-    const score =
-      relevanceScore(
-        job.title,
-        "",
-        keyword
+      seenTitles.add(
+        titleKey
       );
 
-    return score >= 10;
-  });
+      return true;
+    }
+  );
 }
 
 
@@ -962,7 +1223,9 @@ export async function onRequestGet(
   context
 ) {
   const requestUrl =
-    new URL(context.request.url);
+    new URL(
+      context.request.url
+    );
 
   const keyword =
     requestUrl
@@ -971,25 +1234,33 @@ export async function onRequestGet(
       ?.trim() ||
     "보건관리자";
 
+
   const tasks = [
     [
       "사람인",
       () =>
-        searchSaramin(keyword),
+        searchSaramin(
+          keyword
+        ),
     ],
 
     [
       "잡코리아",
       () =>
-        searchJobkorea(keyword),
+        searchJobkorea(
+          keyword
+        ),
     ],
 
     [
       "인크루트",
       () =>
-        searchIncruit(keyword),
+        searchIncruit(
+          keyword
+        ),
     ],
   ];
+
 
   const results =
     await Promise.allSettled(
@@ -998,13 +1269,17 @@ export async function onRequestGet(
       )
     );
 
+
   let jobs = [];
 
   const errors = {};
 
-  results.forEach(
-    (result, index) => {
 
+  results.forEach(
+    (
+      result,
+      index
+    ) => {
       const source =
         tasks[index][0];
 
@@ -1012,29 +1287,24 @@ export async function onRequestGet(
         result.status ===
         "fulfilled"
       ) {
-
         jobs.push(
           ...result.value
         );
-
       } else {
-
         errors[source] =
-          result.reason?.message ||
+          result.reason
+            ?.message ||
           String(
             result.reason
           );
-
       }
-
     }
   );
 
 
   jobs =
-    finalFilter(
-      dedupeJobs(jobs),
-      keyword
+    dedupeJobs(
+      jobs
     );
 
 
@@ -1042,7 +1312,8 @@ export async function onRequestGet(
     JSON.stringify(
       {
         keyword,
-        count: jobs.length,
+        count:
+          jobs.length,
         jobs,
         errors,
       },
@@ -1050,6 +1321,8 @@ export async function onRequestGet(
       2
     ),
     {
+      status: 200,
+
       headers: {
         "content-type":
           "application/json; charset=utf-8",
